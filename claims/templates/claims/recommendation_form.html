@@ -1,0 +1,24 @@
+# STEP 14: Create HTML templates in claims/templates/claims/
+# recommendation_form.html
+'''
+<!DOCTYPE html>
+<html>
+<head><title>Recommend Crown</title></head>
+<body>
+    <h1>Recommend Crown for Patient</h1>
+    <form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Submit</button></form>
+</body>
+</html>
+'''
+
+# recommendation_success.html
+'''
+<!DOCTYPE html>
+<html>
+<head><title>Success</title></head>
+<body>
+    <h1>Crown Recommendation Submitted!</h1>
+    <a href="/claims/recommend/">Submit Another</a>
+</body>
+</html>
+'''
