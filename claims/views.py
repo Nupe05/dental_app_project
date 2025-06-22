@@ -1,32 +1,17 @@
+# STEP 11: Create views in claims/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
 from django.core.mail import EmailMessage
 from django.conf import settings
 from .forms import CrownRecommendationForm
-from .models import CrownRecommendation
+from .models import CrownRecommendation, ToothRecord, Patient
 import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 
-
-def create_crown_recommendation(request):
-    if request.method == 'POST':
-        form = CrownRecommendationForm(request.POST)
-        if form.is_valid():
-            recommendation = form.save()
-            return redirect('generate_pdf', recommendation_id=recommendation.id)
-    else:
-        form = CrownRecommendationForm()
-    return render(request, 'claims/recommendation_form.html', {'form': form})
-
-
-def recommendation_success(request):
-    return render(request, 'claims/recommendation_success.html')
-
-
-def generate_pdf(request, recommendation_id):
-    recommendation = get_object_or_404(CrownRecommendation, id=recommendation_id)
+# === NEW: Helper function to generate and email PDF ===
+def generate_and_email_claim(recommendation):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
@@ -70,7 +55,6 @@ def generate_pdf(request, recommendation_id):
     p.save()
     buffer.seek(0)
 
-    # Send email to staff with the PDF attached
     try:
         email = EmailMessage(
             subject="New Crown Claim Submission",
@@ -80,10 +64,30 @@ def generate_pdf(request, recommendation_id):
         )
         email.attach('crown_claim.pdf', buffer.getvalue(), 'application/pdf')
         email.send()
-        email_status = "Email sent successfully to damon@test.com."
+        return "Email sent successfully to damon@test.com."
     except Exception as e:
-        email_status = f"Failed to send email: {e}"
+        return f"Failed to send email: {e}"
 
+
+# === EXISTING view logic remains unchanged ===
+def create_crown_recommendation(request):
+    if request.method == 'POST':
+        form = CrownRecommendationForm(request.POST)
+        if form.is_valid():
+            recommendation = form.save()
+            return redirect('generate_pdf', recommendation_id=recommendation.id)
+    else:
+        form = CrownRecommendationForm()
+    return render(request, 'claims/recommendation_form.html', {'form': form})
+
+
+def recommendation_success(request):
+    return render(request, 'claims/recommendation_success.html')
+
+
+def generate_pdf(request, recommendation_id):
+    recommendation = get_object_or_404(CrownRecommendation, id=recommendation_id)
+    email_status = generate_and_email_claim(recommendation)
     return render(request, 'claims/recommendation_success.html', {
         'email_status': email_status
     })

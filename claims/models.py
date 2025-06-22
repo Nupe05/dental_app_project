@@ -39,3 +39,9 @@ class CrownRecommendation(models.Model):
 
     def __str__(self):
         return f"Crown Claim: {self.patient.name} - Tooth {self.tooth.tooth_number}"
+
+class TreatmentRecord(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    tooth = models.ForeignKey(ToothRecord, on_delete=models.CASCADE)
+    procedure_code = models.CharField(max_length=10)  # 'D2740' for crown
+    created_at = models.DateTimeField(auto_now_add=True)
