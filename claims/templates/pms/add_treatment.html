@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>Add Crown</title></head>
+<body>
+    <h1>Add Crown for {{ patient.name }}, Tooth {{ tooth.tooth_number }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <p>Procedure Code: <strong>D2740</strong></p>
+        <button type="submit">Submit Crown Treatment</button>
+    </form>
+</body>
+</html>

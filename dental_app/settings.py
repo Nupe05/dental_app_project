@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'claims',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -130,3 +132,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'damonau804@gmail.com'
 EMAIL_HOST_PASSWORD = 'dzmwpokwupillqcs'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+REST_FRAMEWORK = {
+  'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+}

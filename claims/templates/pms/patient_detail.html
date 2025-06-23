@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{ patient.name }}</title></head>
+<body>
+    <h1>{{ patient.name }}'s Teeth</h1>
+    <ul>
+        {% for tooth in teeth %}
+            <li>
+                Tooth {{ tooth.tooth_number }}
+                <a href="{% url 'add_crown' patient.id tooth.id %}">Add Crown</a>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'pms_home' %}">Back to Patients</a>
+</body>
+</html>

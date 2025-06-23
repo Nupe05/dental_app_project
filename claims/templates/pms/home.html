@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>Patient List</title></head>
+<body>
+    <h1>Select a Patient</h1>
+    <ul>
+        {% for patient in patients %}
+            <li><a href="{% url 'patient_detail' patient.id %}">{{ patient.name }}</a></li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
