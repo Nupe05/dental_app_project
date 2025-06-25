@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><title>{{ patient.name }}</title></head>
+<head>
+    <title>{{ patient.name }}</title>
+</head>
 <body>
     <h1>{{ patient.name }}'s Teeth</h1>
     <ul>
@@ -11,6 +13,17 @@
             </li>
         {% endfor %}
     </ul>
+
+    <h2>Submit Scaling and Root Planing (SRP)</h2>
+    <form method="post" action="{% url 'submit_srp' patient.id %}">
+        {% csrf_token %}
+        <label for="tooth_number">Tooth Number:</label>
+        <input type="number" name="tooth_number" required>
+        <input type="hidden" name="procedure_code" value="D4341">
+        <button type="submit">Submit SRP</button>
+    </form>
+
+    <br>
     <a href="{% url 'pms_home' %}">Back to Patients</a>
 </body>
 </html>
