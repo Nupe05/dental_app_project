@@ -1,0 +1,17 @@
+<!-- templates/pms/submit_srp.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submit SRP Treatment</title>
+</head>
+<body>
+    <h1>Submit SRP for {{ patient.name }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit SRP</button>
+    </form>
+    <br>
+    <a href="{% url 'pms_home' %}">Back to Dashboard</a>
+</body>
+</html>

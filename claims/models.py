@@ -41,7 +41,15 @@ class CrownRecommendation(models.Model):
         return f"Crown Claim: {self.patient.name} - Tooth {self.tooth.tooth_number}"
 
 class TreatmentRecord(models.Model):
+    QUADRANT_CHOICES = [
+        ('UR', 'Upper Right'),
+        ('UL', 'Upper Left'),
+        ('LR', 'Lower Right'),
+        ('LL', 'Lower Left'),
+    ]
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     tooth = models.ForeignKey(ToothRecord, on_delete=models.CASCADE)
-    procedure_code = models.CharField(max_length=10)  # 'D2740' for crown
+    procedure_code = models.CharField(max_length=10)  # e.g., 'D2740'
+    quadrant = models.CharField(max_length=2, choices=QUADRANT_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

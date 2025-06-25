@@ -86,23 +86,25 @@ def generate_and_email_srp_pre_auth(treatment):
     # Procedure info
     p.drawString(50, 650, "Procedure: Scaling and Root Planing")
     p.drawString(300, 650, f"CDT Code: {treatment.procedure_code}")
+    quadrant = getattr(treatment, 'quadrant', 'Not specified')
+    p.drawString(50, 630, f"Quadrant: {quadrant}")
 
     # Simulated Perio Chart
-    p.drawString(50, 620, "Attached: Most Recent Perio Chart")
-    p.rect(50, 560, 200, 40)
-    p.drawString(55, 580, "Pocket depths: 4-5mm localized")
-    p.drawString(55, 565, "Bleeding: Present")
+    p.drawString(50, 600, "Attached: Most Recent Perio Chart")
+    p.rect(50, 540, 200, 40)
+    p.drawString(55, 560, "Pocket depths: 4-5mm localized")
+    p.drawString(55, 545, "Bleeding: Present")
 
     # Simulated X-ray image
     xray_path = os.path.join(settings.BASE_DIR, 'static', 'demo_xray.jpg')
     if os.path.exists(xray_path):
         try:
             xray = ImageReader(xray_path)
-            p.drawImage(xray, 300, 540, width=200, height=150, preserveAspectRatio=True)
+            p.drawImage(xray, 300, 520, width=200, height=150, preserveAspectRatio=True)
         except Exception as e:
-            p.drawString(300, 520, f"[X-ray load error: {e}]")
+            p.drawString(300, 500, f"[X-ray load error: {e}]")
     else:
-        p.drawString(300, 520, "[Demo X-ray not found: demo_xray.jpg]")
+        p.drawString(300, 500, "[Demo X-ray not found: demo_xray.jpg]")
 
     p.showPage()
     p.save()
