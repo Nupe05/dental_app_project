@@ -1,7 +1,8 @@
-<!-- templates/pms/patient_detail.html -->
 <!DOCTYPE html>
 <html>
-<head><title>{{ patient.name }}</title></head>
+<head>
+    <title>{{ patient.name }}</title>
+</head>
 <body>
     <h1>{{ patient.name }}'s Teeth</h1>
     <ul>
@@ -13,8 +14,11 @@
         {% endfor %}
     </ul>
 
-    <h3>Other Procedures</h3>
-    <a href="{% url 'submit_srp' patient.id %}">Submit Scaling & Root Planing (SRP)</a><br><br>
+    <h2>Other Procedures</h2>
+    <ul>
+        <li><a href="{% url 'submit_srp' patient.id %}">Submit SRP (Scaling & Root Planing)</a></li>
+        <li><a href="{% url 'submit_occlusal_guard' patient.id %}">Submit Occlusal Guard</a></li>
+    </ul>
 
     <a href="{% url 'pms_home' %}">Back to Patients</a>
 </body>

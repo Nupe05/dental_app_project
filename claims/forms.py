@@ -29,3 +29,9 @@ class SRPTreatmentForm(forms.Form):
         ],
         label='Quadrant'
     )
+
+class OcclusalGuardForm(forms.Form):
+    procedure_code = forms.CharField(
+        initial='D9944',  # CDT for occlusal guard
+        widget=forms.HiddenInput()
+    )

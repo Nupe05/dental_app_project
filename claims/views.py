@@ -4,17 +4,55 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from .forms import CrownRecommendationForm, SRPTreatmentForm
 from .models import CrownRecommendation, ToothRecord, Patient, TreatmentRecord
-from .utils import generate_and_email_claim, generate_and_email_srp_pre_auth
+from .utils import generate_and_email_claim, generate_and_email_srp_pre_auth, generate_and_email_occlusal_guard_pre_auth
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
+from django.http import FileResponse
+from .models import CrownRecommendation
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from .forms import OcclusalGuardForm
+
+
+def generate_pdf(request, recommendation_id):
+    recommendation = get_object_or_404(CrownRecommendation, id=recommendation_id)
+    
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(180, 750, "American Dental Association")
+    p.setFont("Helvetica", 12)
+    p.drawString(200, 730, "Dental Claim Summary")
+
+    p.drawString(50, 700, f"Patient: {recommendation.patient.name}")
+    p.drawString(300, 700, f"DOB: {recommendation.patient.dob}")
+    p.drawString(50, 680, f"Tooth #: {recommendation.tooth.tooth_number}")
+    p.drawString(300, 680, f"CDT Code: {recommendation.cdt_code}")
+    p.drawString(50, 660, f"Diagnosis: {recommendation.tooth.diagnosis}")
+    p.drawString(50, 640, "Clinical Note:")
+    
+    text = p.beginText(50, 620)
+    text.setFont("Helvetica", 10)
+    for line in recommendation.clinical_note.splitlines():
+        text.textLine(line)
+    p.drawText(text)
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    return FileResponse(buffer, as_attachment=True, filename='claim_summary.pdf')
 
 # === Centralized CDT Codes ===
 CDT_CODES = {
     'CROWN': 'D2740',
     'SRP': 'D4341',
+    'OCCLUSAL_GUARD': 'D9944',
 }
 
 # === Crown Treatment View ===
@@ -33,7 +71,7 @@ def add_crown_treatment(request, patient_id, tooth_id):
 
     return render(request, 'pms/add_treatment.html', {'patient': patient, 'tooth': tooth})
 
-## === SRP Treatment View with Quadrant ===
+# === SRP Treatment View with Quadrant ===
 @login_required
 def submit_srp_treatment(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -58,13 +96,28 @@ def submit_srp_treatment(request, patient_id):
             status_msg = generate_and_email_srp_pre_auth(treatment)
             print(status_msg)
             return redirect('pms_success')
-        else:
-            print("SRP Form Errors:", form.errors)  # 🔍 Add this line for debugging
-
     else:
         form = SRPTreatmentForm()
 
     return render(request, 'pms/submit_srp.html', {'form': form, 'patient': patient})
+
+# === Occlusal Guard Auto-Submission View ===
+@login_required
+def submit_occlusal_guard(request, patient_id):
+    patient = get_object_or_404(Patient, id=patient_id)
+    tooth = ToothRecord.objects.filter(patient=patient).first()  # Simplified for prototype
+
+    if request.method == 'POST':
+        treatment = TreatmentRecord.objects.create(
+            patient=patient,
+            tooth=tooth,
+            procedure_code=CDT_CODES['OCCLUSAL_GUARD']
+        )
+        status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
+        print(status_msg)
+        return redirect('pms_success')
+
+    return render(request, 'pms/submit_occlusal_guard.html', {'patient': patient})
 
 # === PMS Success Page ===
 def pms_success(request):
@@ -124,13 +177,29 @@ def create_crown_recommendation(request):
 def recommendation_success(request):
     return render(request, 'claims/recommendation_success.html')
 
-    # === Generate Crown Claim PDF Only View ===
 @login_required
-def generate_pdf(request, recommendation_id):
-    recommendation = get_object_or_404(CrownRecommendation, id=recommendation_id)
-    status_msg = generate_and_email_claim(recommendation)
-    return render(request, 'claims/recommendation_success.html', {
-        'email_status': status_msg
+def submit_occlusal_guard(request, patient_id):
+    patient = get_object_or_404(Patient, id=patient_id)
+
+    if request.method == 'POST':
+        form = OcclusalGuardForm(request.POST)
+        if form.is_valid():
+            procedure_code = form.cleaned_data['procedure_code']
+            # Create dummy tooth record if none selected
+            dummy_tooth, _ = ToothRecord.objects.get_or_create(
+                patient=patient, tooth_number=99,
+                defaults={"diagnosis": "Bruxism", "xray_file": None}
+            )
+            treatment = TreatmentRecord.objects.create(
+                patient=patient,
+                tooth=dummy_tooth,
+                procedure_code=procedure_code
+            )
+            return redirect('pms_success')
+    else:
+        form = OcclusalGuardForm()
+
+    return render(request, 'pms/submit_occlusal_guard.html', {
+        'patient': patient,
+        'form': form
     })
-
-

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submit Occlusal Guard</title>
+</head>
+<body>
+    <h1>Submit Occlusal Guard for {{ patient.name }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit Treatment</button>
+    </form>
+    <a href="{% url 'pms_home' %}">Back to Dashboard</a>
+</body>
+</html>
