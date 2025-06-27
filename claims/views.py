@@ -21,6 +21,12 @@ from .models import Patient, CrownRecommendation, TreatmentRecord
 from django.contrib.auth import logout
 from django.shortcuts import redirect
 
+from django.contrib.auth.views import LoginView
+
+class CustomLoginView(LoginView):
+    template_name = 'claims/login.html'  # We'll create this template next
+
+
 def custom_logout(request):
     logout(request)
     return redirect('pms_home')

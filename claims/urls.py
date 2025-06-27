@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import CustomLoginView
 
 urlpatterns = [
     path('recommend/', views.create_crown_recommendation, name='create_recommendation'),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('pms/patient/<int:patient_id>/occlusal_guard/', views.submit_occlusal_guard, name='submit_occlusal_guard'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('logout/', views.custom_logout, name='logout'),
+    path('login/', CustomLoginView.as_view(), name='login'),
 
 
 ]

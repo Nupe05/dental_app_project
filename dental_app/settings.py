@@ -57,7 +57,7 @@ ROOT_URLCONF = 'dental_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['claims/templates'],  # Directory for custom templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -138,3 +138,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
+
+LOGIN_URL = '/claims/login/'
+LOGIN_REDIRECT_URL = '/claims/pms/'  # or wherever you want users to land after login
+LOGOUT_REDIRECT_URL = '/claims/login/'  # redirect to login after logout
