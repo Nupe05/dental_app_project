@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head><title>Success</title></head>
-<body>
-    <h1>Crown Recommendation Submitted!</h1>
-    {% if email_status %}
-        <p>{{ email_status }}</p>
-    {% endif %}
-    <a href="/claims/recommend/">Submit Another</a>
-</body>
-</html>
+{% extends "claims/base.html" %}
+
+{% block title %}Success{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h1 class="text-success">Crown Recommendation Submitted!</h1>
+    <a href="{% url 'create_recommendation' %}" class="btn btn-link mt-3">Submit Another</a>
+  </div>
+{% endblock %}

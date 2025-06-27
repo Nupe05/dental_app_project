@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head><title>Submitted</title></head>
-<body>
-    <h1>Crown Treatment Submitted</h1>
-    <a href="{% url 'pms_home' %}">Return to Patient List</a>
-</body>
-</html>
+<!-- templates/pms/success.html -->
+{% extends 'base.html' %}
+{% block content %}
+<div class="alert alert-success mt-4" role="alert">
+    Claim submitted successfully!
+</div>
+<a href="{% url 'pms_home' %}" class="btn btn-primary mt-3">Back to Dashboard</a>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "claims/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Submitted Claims Dashboard</h2>
+
+    <h4 class="mt-4">Crown Recommendations</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Tooth</th>
+                <th>CDT Code</th>
+                <th>Status</th>
+                <th>Submitted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for claim in crown_claims %}
+            <tr>
+                <td>{{ claim.patient.name }}</td>
+                <td>{{ claim.tooth.tooth_number }}</td>
+                <td>{{ claim.cdt_code }}</td>
+                <td>{{ claim.status }}</td>
+                <td>{{ claim.submitted_at|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No crown claims submitted.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 class="mt-4">Other Procedures (SRP, Occlusal Guard)</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>Procedure Code</th>
+                <th>Tooth / Quadrant</th>
+                <th>Status</th>
+                <th>Submitted</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in treatment_claims %}
+            <tr>
+                <td>{{ t.patient.name }}</td>
+                <td>{{ t.procedure_code }}</td>
+                <td>
+                    {% if t.tooth %}
+                        Tooth {{ t.tooth.tooth_number }}
+                    {% else %}
+                        {{ t.quadrant }}
+                    {% endif %}
+                </td>
+                <td>{{ t.status }}</td>
+                <td>{{ t.submitted_at|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No treatment records submitted.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

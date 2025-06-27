@@ -1,17 +1,15 @@
-<!-- templates/pms/submit_srp.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Submit SRP Treatment</title>
-</head>
-<body>
-    <h1>Submit SRP for {{ patient.name }}</h1>
+{% extends "claims/base.html" %}
+
+{% block title %}Scaling & Root Planing{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Submit SRP Treatment for {{ patient.name }}</h2>
     <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Submit SRP</button>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Submit</button>
     </form>
-    <br>
-    <a href="{% url 'pms_home' %}">Back to Dashboard</a>
-</body>
-</html>
+  </div>
+{% endblock %}
+

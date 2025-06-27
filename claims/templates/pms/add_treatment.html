@@ -1,12 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head><title>Add Crown</title></head>
-<body>
-    <h1>Add Crown for {{ patient.name }}, Tooth {{ tooth.tooth_number }}</h1>
+{% extends "claims/base.html" %}
+
+{% block title %}Add Crown{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h1 class="mb-4">Add Crown for {{ patient.name }}, Tooth {{ tooth.tooth_number }}</h1>
+    
     <form method="post">
-        {% csrf_token %}
-        <p>Procedure Code: <strong>D2740</strong></p>
-        <button type="submit">Submit Crown Treatment</button>
+      {% csrf_token %}
+      <p><strong>Procedure Code:</strong> D2740</p>
+      <button type="submit" class="btn btn-primary">Submit Crown Treatment</button>
     </form>
-</body>
-</html>
+  </div>
+{% endblock %}

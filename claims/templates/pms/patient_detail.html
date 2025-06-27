@@ -1,25 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ patient.name }}</title>
-</head>
-<body>
-    <h1>{{ patient.name }}'s Teeth</h1>
-    <ul>
-        {% for tooth in teeth %}
-            <li>
-                Tooth {{ tooth.tooth_number }}
-                <a href="{% url 'add_crown' patient.id tooth.id %}">Add Crown</a>
-            </li>
-        {% endfor %}
+{% extends "claims/base.html" %}
+
+{% block title %}Patient Detail{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Patient: {{ patient.name }}</h2>
+    <p><strong>DOB:</strong> {{ patient.dob }}</p>
+    <p><strong>Insurance:</strong> {{ patient.insurance_provider }} ({{ patient.policy_number }})</p>
+
+    <hr>
+
+    <h4>Tooth Records</h4>
+    <ul class="list-group">
+      {% for tooth in teeth %}
+        <li class="list-group-item">
+          Tooth {{ tooth.tooth_number }} — {{ tooth.diagnosis }}
+        </li>
+      {% empty %}
+        <li class="list-group-item">No tooth records available.</li>
+      {% endfor %}
     </ul>
 
-    <h2>Other Procedures</h2>
-    <ul>
-        <li><a href="{% url 'submit_srp' patient.id %}">Submit SRP (Scaling & Root Planing)</a></li>
-        <li><a href="{% url 'submit_occlusal_guard' patient.id %}">Submit Occlusal Guard</a></li>
-    </ul>
-
-    <a href="{% url 'pms_home' %}">Back to Patients</a>
-</body>
-</html>
+    <div class="mt-4">
+      <h4>Submit Treatments</h4>
+      <a href="{% url 'submit_crown_treatment' patient.id %}" class="btn btn-outline-primary me-2">Crown</a>
+      <a href="{% url 'submit_occlusal_guard' patient.id %}" class="btn btn-outline-secondary me-2">Occlusal Guard</a>
+      <a href="{% url 'submit_srp_treatment' patient.id %}" class="btn btn-outline-success">SRP</a>
+    </div>
+  </div>
+{% endblock %}

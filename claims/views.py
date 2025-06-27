@@ -16,6 +16,40 @@ import io
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from .forms import OcclusalGuardForm
+from django.shortcuts import render
+from .models import Patient, CrownRecommendation, TreatmentRecord
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def custom_logout(request):
+    logout(request)
+    return redirect('pms_home')
+
+
+def dashboard(request):
+    crown_claims = CrownRecommendation.objects.all().order_by('-submitted_at')
+    treatment_claims = TreatmentRecord.objects.all().order_by('-submitted_at')
+
+    return render(request, 'claims/dashboard.html', {
+        'crown_claims': crown_claims,
+        'treatment_claims': treatment_claims,
+    })
+
+
+def pms_home(request):
+    patients = Patient.objects.all()
+
+    # Fetch claims from all models
+    crown_claims = CrownRecommendation.objects.exclude(status='Pending')
+    other_claims = TreatmentRecord.objects.exclude(status='Pending')
+
+    context = {
+        'patients': patients,
+        'crown_claims': crown_claims,
+        'other_claims': other_claims,
+    }
+    return render(request, 'pms/dashboard.html', context)
+
 
 
 def generate_pdf(request, recommendation_id):
@@ -83,7 +117,7 @@ def submit_srp_treatment(request, patient_id):
             tooth_number = form.cleaned_data['tooth_number']
             quadrant = form.cleaned_data['quadrant']
 
-            tooth = ToothRecord.objects.filter(patient=patient, tooth_number=tooth_number).first()
+            tooth = ToothRecord.objects.filter(patient=patient, tooth_number=int(tooth_number)).first()
             if not tooth:
                 return JsonResponse({"error": "Tooth record not found."}, status=400)
 
@@ -93,14 +127,15 @@ def submit_srp_treatment(request, patient_id):
                 procedure_code=code,
                 quadrant=quadrant
             )
-            status_msg = generate_and_email_srp_pre_auth(treatment)
-            print(status_msg)
+            generate_and_email_srp_pre_auth(treatment)
+            treatment.mark_submitted()
             return redirect('pms_success')
+        else:
+            print(form.errors)  # Log the form errors to debug invalid submissions
     else:
         form = SRPTreatmentForm()
 
     return render(request, 'pms/submit_srp.html', {'form': form, 'patient': patient})
-
 # === Occlusal Guard Auto-Submission View ===
 @login_required
 def submit_occlusal_guard(request, patient_id):
@@ -111,14 +146,17 @@ def submit_occlusal_guard(request, patient_id):
         treatment = TreatmentRecord.objects.create(
             patient=patient,
             tooth=tooth,
-            procedure_code=CDT_CODES['OCCLUSAL_GUARD']
+            procedure_code='D9944'
         )
         status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
-        print(status_msg)
+        print(f"[EMAIL STATUS] {status_msg}")  # <-- Print email result for debugging
         return redirect('pms_success')
 
-    return render(request, 'pms/submit_occlusal_guard.html', {'patient': patient})
-
+    form = OcclusalGuardForm()
+    return render(request, 'pms/submit_occlusal_guard.html', {
+        'patient': patient,
+        'form': form
+    })
 # === PMS Success Page ===
 def pms_success(request):
     return render(request, 'pms/success.html')
