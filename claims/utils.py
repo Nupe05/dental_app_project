@@ -58,52 +58,66 @@ def generate_and_email_claim(recommendation):
         return f"Failed to send email: {e}"
 
 def generate_and_email_srp_pre_auth(treatment):
-    import io
+    import io, os
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.utils import ImageReader
     from django.core.mail import EmailMessage
+    from django.conf import settings
 
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
+    # Header
     p.setFont("Helvetica-Bold", 16)
     p.drawString(180, 750, "American Dental Association")
     p.setFont("Helvetica", 12)
     p.drawString(180, 730, "Scaling and Root Planing - Pre-Authorization")
     p.line(50, 725, 550, 725)
 
+    # Patient Info
     p.drawString(50, 700, f"Patient: {treatment.patient.name}")
     p.drawString(300, 700, f"DOB: {treatment.patient.dob}")
     p.drawString(50, 680, f"Insurance Provider: {treatment.patient.insurance_provider}")
     p.drawString(300, 680, f"Policy #: {treatment.patient.policy_number}")
 
+    # Procedure
     p.drawString(50, 650, "Procedure: Scaling and Root Planing")
     p.drawString(300, 650, f"CDT Code: {treatment.procedure_code}")
-    p.drawString(50, 620, "Attached: Most Recent Perio Chart")
-    p.rect(50, 560, 200, 40)
-    p.drawString(55, 580, "Pocket depths: 4-5mm localized")
-    p.drawString(55, 565, "Bleeding: Present")
+    p.drawString(50, 620, "Clinical Note: Localized 4-5mm pocketing with bleeding on probing")
 
-    # X-ray placeholder
-    xray_path = os.path.join(settings.BASE_DIR, 'static', 'demo_xray.jpg')
+    # Perio Chart Placeholder
+    perio_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'placeholder_periochart.png')
+    if os.path.exists(perio_path):
+        try:
+            perio = ImageReader(perio_path)
+            p.drawImage(perio, 50, 460, width=200, height=120)
+        except Exception as e:
+            p.drawString(50, 480, f"[Perio chart load error: {e}]")
+    else:
+        p.drawString(50, 480, "[Perio chart not found]")
+
+    # X-ray Placeholder
+    xray_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'demo_xray.jpg')
     if os.path.exists(xray_path):
         try:
             xray = ImageReader(xray_path)
-            p.drawImage(xray, 300, 540, width=200, height=150, preserveAspectRatio=True)
+            p.drawImage(xray, 300, 460, width=200, height=120)
         except Exception as e:
-            p.drawString(300, 520, f"[X-ray load error: {e}]")
+            p.drawString(300, 480, f"[X-ray load error: {e}]")
     else:
-        p.drawString(300, 520, "[Demo X-ray not found: demo_xray.jpg]")
+        p.drawString(300, 480, "[X-ray not found]")
 
+    # Finalize PDF
     p.showPage()
     p.save()
     buffer.seek(0)
 
+    # Send Email
     try:
         email = EmailMessage(
             subject="Scaling & Root Planing Pre-Authorization",
-            body="Attached are the documents for SRP pre-authorization.\nIncludes demo x-ray and perio chart data.",
+            body="Attached are the documents for SRP pre-authorization, including perio chart and x-ray.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=["damon@dadswag.club"]
         )
@@ -112,6 +126,7 @@ def generate_and_email_srp_pre_auth(treatment):
         return "Email sent successfully."
     except Exception as e:
         return f"Failed to send email: {e}"
+
 
 
 def generate_and_email_occlusal_guard_pre_auth(treatment):
