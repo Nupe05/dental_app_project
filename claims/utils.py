@@ -58,6 +58,12 @@ def generate_and_email_claim(recommendation):
         return f"Failed to send email: {e}"
 
 def generate_and_email_srp_pre_auth(treatment):
+    import io
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.utils import ImageReader
+    from django.core.mail import EmailMessage
+
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
@@ -79,6 +85,7 @@ def generate_and_email_srp_pre_auth(treatment):
     p.drawString(55, 580, "Pocket depths: 4-5mm localized")
     p.drawString(55, 565, "Bleeding: Present")
 
+    # X-ray placeholder
     xray_path = os.path.join(settings.BASE_DIR, 'static', 'demo_xray.jpg')
     if os.path.exists(xray_path):
         try:
@@ -96,7 +103,7 @@ def generate_and_email_srp_pre_auth(treatment):
     try:
         email = EmailMessage(
             subject="Scaling & Root Planing Pre-Authorization",
-            body="Attached are the necessary documents for pre-authorization.",
+            body="Attached are the documents for SRP pre-authorization.\nIncludes demo x-ray and perio chart data.",
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=["damon@dadswag.club"]
         )
@@ -105,6 +112,7 @@ def generate_and_email_srp_pre_auth(treatment):
         return "Email sent successfully."
     except Exception as e:
         return f"Failed to send email: {e}"
+
 
 def generate_and_email_occlusal_guard_pre_auth(treatment):
     buffer = io.BytesIO()

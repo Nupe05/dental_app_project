@@ -1,0 +1,61 @@
+/* === Global Styles === */
+body {
+    background-color: #f8f9fa;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* === Navbar === */
+.navbar {
+    background-color: #004080;
+}
+
+.navbar-brand, .nav-link {
+    color: white !important;
+}
+
+.nav-link:hover {
+    color: #ffc107 !important;
+}
+
+/* === Headings === */
+h1, h2, h3 {
+    color: #004080;
+}
+
+/* === Buttons === */
+.btn-primary {
+    background-color: #004080;
+    border-color: #004080;
+}
+
+.btn-primary:hover {
+    background-color: #003060;
+    border-color: #003060;
+}
+
+/* === Forms === */
+form {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* === Alerts === */
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+/* === Dashboard Tables === */
+.table th {
+    background-color: #004080;
+    color: white;
+}
+
+.table td {
+    vertical-align: middle;
+}

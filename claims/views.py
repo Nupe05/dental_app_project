@@ -143,26 +143,42 @@ def submit_srp_treatment(request, patient_id):
 
     return render(request, 'pms/submit_srp.html', {'form': form, 'patient': patient})
 # === Occlusal Guard Auto-Submission View ===
+from django.contrib import messages
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Patient, ToothRecord, TreatmentRecord
+from .utils import generate_and_email_occlusal_guard_pre_auth
+from django.contrib.auth.decorators import login_required
+from .forms import OcclusalGuardForm  # Ensure this form exists
+
 @login_required
 def submit_occlusal_guard(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
-    tooth = ToothRecord.objects.filter(patient=patient).first()  # Simplified for prototype
 
     if request.method == 'POST':
-        treatment = TreatmentRecord.objects.create(
-            patient=patient,
-            tooth=tooth,
-            procedure_code='D9944'
-        )
-        status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
-        print(f"[EMAIL STATUS] {status_msg}")  # <-- Print email result for debugging
-        return redirect('pms_success')
+        form = OcclusalGuardForm(request.POST)
+        if form.is_valid():
+            tooth = ToothRecord.objects.filter(patient=patient).first()  # Simplified
+            treatment = TreatmentRecord.objects.create(
+                patient=patient,
+                tooth=tooth,
+                procedure_code='D9944'
+            )
+            treatment.mark_submitted()
+            status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
+            print(f"[EMAIL STATUS] {status_msg}")
+            messages.success(request, f"Occlusal guard submitted. {status_msg}")
+            return redirect('pms_success')
+        else:
+            print(form.errors)  # 🛠️ For debugging
+    else:
+        form = OcclusalGuardForm()
 
-    form = OcclusalGuardForm()
     return render(request, 'pms/submit_occlusal_guard.html', {
         'patient': patient,
         'form': form
     })
+
+    
 # === PMS Success Page ===
 def pms_success(request):
     return render(request, 'pms/success.html')
