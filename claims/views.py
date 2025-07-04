@@ -23,6 +23,15 @@ from django.shortcuts import redirect
 
 from django.contrib.auth.views import LoginView
 
+from django.contrib.auth.decorators import login_required
+from .models import Patient
+
+@login_required
+def patient_list(request):
+    patients = Patient.objects.all()
+    return render(request, 'pms/patient_list.html', {'patients': patients})
+
+
 class CustomLoginView(LoginView):
     template_name = 'claims/login.html'  # We'll create this template next
 
@@ -155,23 +164,19 @@ def submit_occlusal_guard(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
 
     if request.method == 'POST':
-        form = OcclusalGuardForm(request.POST)
+        form = OcclusalGuardForm(request.POST, patient=patient)
         if form.is_valid():
-            tooth = ToothRecord.objects.filter(patient=patient).first()  # Simplified
+            tooth = form.cleaned_data['tooth']
             treatment = TreatmentRecord.objects.create(
                 patient=patient,
                 tooth=tooth,
                 procedure_code='D9944'
             )
-            treatment.mark_submitted()
             status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
             print(f"[EMAIL STATUS] {status_msg}")
-            messages.success(request, f"Occlusal guard submitted. {status_msg}")
             return redirect('pms_success')
-        else:
-            print(form.errors)  # 🛠️ For debugging
     else:
-        form = OcclusalGuardForm()
+        form = OcclusalGuardForm(patient=patient)
 
     return render(request, 'pms/submit_occlusal_guard.html', {
         'patient': patient,
@@ -237,29 +242,4 @@ def create_crown_recommendation(request):
 def recommendation_success(request):
     return render(request, 'claims/recommendation_success.html')
 
-@login_required
-def submit_occlusal_guard(request, patient_id):
-    patient = get_object_or_404(Patient, id=patient_id)
 
-    if request.method == 'POST':
-        form = OcclusalGuardForm(request.POST)
-        if form.is_valid():
-            procedure_code = form.cleaned_data['procedure_code']
-            # Create dummy tooth record if none selected
-            dummy_tooth, _ = ToothRecord.objects.get_or_create(
-                patient=patient, tooth_number=99,
-                defaults={"diagnosis": "Bruxism", "xray_file": None}
-            )
-            treatment = TreatmentRecord.objects.create(
-                patient=patient,
-                tooth=dummy_tooth,
-                procedure_code=procedure_code
-            )
-            return redirect('pms_success')
-    else:
-        form = OcclusalGuardForm()
-
-    return render(request, 'pms/submit_occlusal_guard.html', {
-        'patient': patient,
-        'form': form
-    })

@@ -23,7 +23,7 @@
 
     <div class="mt-4">
       <h4>Submit Treatments</h4>
-      <a href="{% url 'submit_crown_treatment' patient.id %}" class="btn btn-outline-primary me-2">Crown</a>
+      <a href="{% url 'add_crown' patient.id tooth.id %}" class="btn btn-outline-primary me-2">Crown</a>
       <a href="{% url 'submit_occlusal_guard' patient.id %}" class="btn btn-outline-secondary me-2">Occlusal Guard</a>
       <a href="{% url 'submit_srp_treatment' patient.id %}" class="btn btn-outline-success">SRP</a>
     </div>

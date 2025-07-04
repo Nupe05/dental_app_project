@@ -1,14 +1,12 @@
 {% extends "claims/base.html" %}
 
-<!DOCTYPE html>
-<html>
-<head><title>Patient List</title></head>
-<body>
+{% block content %}
     <h1>Select a Patient</h1>
-    <ul>
+    <ul class="list-group">
         {% for patient in patients %}
-            <li><a href="{% url 'patient_detail' patient.id %}">{{ patient.name }}</a></li>
+            <li class="list-group-item">
+                <a href="{% url 'patient_detail' patient.id %}">{{ patient.name }}</a>
+            </li>
         {% endfor %}
     </ul>
-</body>
-</html>
+{% endblock %}

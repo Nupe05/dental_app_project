@@ -1,6 +1,22 @@
 from django import forms
 from .models import CrownRecommendation, ToothRecord, TreatmentRecord
 
+
+
+class OcclusalGuardForm(forms.Form):
+    procedure_code = forms.CharField(
+        initial='D9944',
+        widget=forms.HiddenInput()
+    )
+    tooth = forms.ModelChoiceField(queryset=ToothRecord.objects.none(), label="Select Tooth")
+
+    def __init__(self, *args, **kwargs):
+        patient = kwargs.pop('patient', None)
+        super().__init__(*args, **kwargs)
+        if patient:
+            self.fields['tooth'].queryset = ToothRecord.objects.filter(patient=patient)
+
+
 class CrownRecommendationForm(forms.ModelForm):
     class Meta:
         model = CrownRecommendation
@@ -30,8 +46,3 @@ class SRPTreatmentForm(forms.Form):
         label='Quadrant'
     )
 
-class OcclusalGuardForm(forms.Form):
-    procedure_code = forms.CharField(
-        initial='D9944',  # CDT for occlusal guard
-        widget=forms.HiddenInput()
-    )
