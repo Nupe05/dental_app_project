@@ -16,10 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from claims.views import pms_home
+from claims.views import dashboard, pms_home
 
 urlpatterns = [
     path('admin/', admin.site.urls),  
-    path('', pms_home, name='home'),
+    path('', pms_home, name='home'),  # ✅ Home points to pms_home
     path('claims/', include('claims.urls')),
 ]
+
