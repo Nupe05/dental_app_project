@@ -1,6 +1,7 @@
-# 🦷 Dental Insurance Automation App
+# ✅ Claimly — Get It Done
 
-This Django-based application automates the dental insurance claim process for common dental procedures like **crowns**, **occlusal guards**, and **scaling and root planing (SRP)**. It streamlines documentation, generates clinical notes, analyzes x-rays using AI, and submits insurance claims via email — all in a few clicks.
+Claimly is a Django-based application that automates the dental insurance claim process for routine procedures like **crowns**, **occlusal guards**, and **scaling and root planing (SRP)**.  
+It streamlines documentation, generates clinical notes, analyzes x-rays using AI, and submits claims via email — all in a few clicks.
 
 ---
 
@@ -53,6 +54,13 @@ This Django-based application automates the dental insurance claim process for c
 - **Deployment-ready**: Compatible with Heroku or Docker
 
 ---
+
+## 💬 Tagline
+
+> **Claimly — Get It Done.**  
+> From diagnosis to documentation to delivery, Claimly streamlines the entire claim process — calmly and automatically.
+
+
 
 
 
