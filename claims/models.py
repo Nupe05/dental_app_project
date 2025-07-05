@@ -13,6 +13,15 @@ class Patient(models.Model):
         return self.name
 
 
+class PatientXRay(models.Model):
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='xrays/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"X-ray for {self.patient.name} at {self.uploaded_at}"
+
+
 class ToothRecord(models.Model):
     TOOTH_CHOICES = [(i, f'Tooth {i}') for i in range(1, 33)]
 

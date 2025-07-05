@@ -6,6 +6,24 @@ from reportlab.lib.utils import ImageReader
 from django.core.mail import EmailMessage
 from django.conf import settings
 
+from fastai.vision.all import load_learner, PILImage
+
+# === Load the model ONCE ===
+MODEL_PATH = os.path.join(settings.BASE_DIR, 'claims', 'abscess_detector.pkl')
+abscess_model = load_learner(MODEL_PATH)
+
+def predict_abscess(image_path):
+    """Runs prediction on the uploaded x-ray image and returns the label and confidence."""
+    try:
+        img = PILImage.create(image_path)
+        pred, pred_idx, probs = abscess_model.predict(img)
+        print(f"[MODEL PREDICTION] {pred} — confidence: {probs[pred_idx]:.4f}")
+        return str(pred), float(probs[pred_idx])
+    except Exception as e:
+        print(f"[MODEL ERROR] {e}")
+        return "Error", 0.0
+
+
 def generate_and_email_claim(recommendation):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
@@ -57,31 +75,22 @@ def generate_and_email_claim(recommendation):
     except Exception as e:
         return f"Failed to send email: {e}"
 
-def generate_and_email_srp_pre_auth(treatment):
-    import io, os
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.utils import ImageReader
-    from django.core.mail import EmailMessage
-    from django.conf import settings
 
+def generate_and_email_srp_pre_auth(treatment):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
-    # Header
     p.setFont("Helvetica-Bold", 16)
     p.drawString(180, 750, "American Dental Association")
     p.setFont("Helvetica", 12)
     p.drawString(180, 730, "Scaling and Root Planing - Pre-Authorization")
     p.line(50, 725, 550, 725)
 
-    # Patient Info
     p.drawString(50, 700, f"Patient: {treatment.patient.name}")
     p.drawString(300, 700, f"DOB: {treatment.patient.dob}")
     p.drawString(50, 680, f"Insurance Provider: {treatment.patient.insurance_provider}")
     p.drawString(300, 680, f"Policy #: {treatment.patient.policy_number}")
 
-    # Procedure
     p.drawString(50, 650, "Procedure: Scaling and Root Planing")
     p.drawString(300, 650, f"CDT Code: {treatment.procedure_code}")
     p.drawString(50, 620, "Clinical Note: Localized 4-5mm pocketing with bleeding on probing")
@@ -108,12 +117,10 @@ def generate_and_email_srp_pre_auth(treatment):
     else:
         p.drawString(300, 480, "[X-ray not found]")
 
-    # Finalize PDF
     p.showPage()
     p.save()
     buffer.seek(0)
 
-    # Send Email
     try:
         email = EmailMessage(
             subject="Scaling & Root Planing Pre-Authorization",
@@ -126,7 +133,6 @@ def generate_and_email_srp_pre_auth(treatment):
         return "Email sent successfully."
     except Exception as e:
         return f"Failed to send email: {e}"
-
 
 
 def generate_and_email_occlusal_guard_pre_auth(treatment):
@@ -169,6 +175,7 @@ def generate_and_email_occlusal_guard_pre_auth(treatment):
         return "Email sent successfully."
     except Exception as e:
         return f"Failed to send email: {e}"
+
 
 def generate_clinical_note(tooth_number, diagnosis):
     return f"Tooth {tooth_number} presents with {diagnosis}. A crown is recommended to restore function and prevent further damage."

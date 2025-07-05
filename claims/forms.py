@@ -1,5 +1,18 @@
 from django import forms
 from .models import CrownRecommendation, ToothRecord, TreatmentRecord
+from .models import PatientXRay
+
+
+class PatientXRayForm(forms.ModelForm):
+    class Meta:
+        model = PatientXRay
+        fields = ['image']
+
+
+class PatientXRayForm(forms.ModelForm):
+    class Meta:
+        model = PatientXRay
+        fields = ['image']
 
 
 
@@ -45,4 +58,3 @@ class SRPTreatmentForm(forms.Form):
         ],
         label='Quadrant'
     )
-

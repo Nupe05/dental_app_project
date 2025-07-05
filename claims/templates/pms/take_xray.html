@@ -1,0 +1,14 @@
+{% extends "claims/base.html" %}
+
+{% block title %}Take X-ray{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Upload X-ray for {{ patient.name }}</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+  </div>
+{% endblock %}

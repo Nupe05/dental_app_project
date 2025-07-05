@@ -16,7 +16,7 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('login/', CustomLoginView.as_view(), name='login'),
     path('pms/patients/', views.patient_list, name='patient_list'),
-
-
-
+    path('pms/patient/<int:patient_id>/xray/', views.take_xray, name='take_xray'),
+    path('pms/patient/<int:patient_id>/test_model/', views.test_model_view, name='test_model'),
+    
 ]
