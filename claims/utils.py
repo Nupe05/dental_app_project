@@ -28,21 +28,23 @@ def generate_and_email_claim(recommendation):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
+    # Header
     p.setFont("Helvetica-Bold", 16)
     p.drawString(180, 750, "American Dental Association")
     p.setFont("Helvetica", 12)
     p.drawString(200, 730, "Dental Claim Form - Crown Procedure")
     p.line(50, 725, 550, 725)
 
+    # Patient & Claim Info
     p.drawString(50, 700, f"Patient: {recommendation.patient.name}")
     p.drawString(300, 700, f"DOB: {recommendation.patient.dob}")
     p.drawString(50, 680, f"Insurance Provider: {recommendation.patient.insurance_provider}")
     p.drawString(300, 680, f"Policy #: {recommendation.patient.policy_number}")
-
     p.drawString(50, 650, f"Tooth #: {recommendation.tooth.tooth_number}")
     p.drawString(300, 650, f"CDT Code: {recommendation.cdt_code}")
     p.drawString(50, 630, f"Diagnosis: {recommendation.tooth.diagnosis}")
 
+    # Clinical Note
     p.drawString(50, 610, "Clinical Note:")
     text = p.beginText(50, 595)
     text.setFont("Helvetica", 10)
@@ -50,13 +52,18 @@ def generate_and_email_claim(recommendation):
         text.textLine(line)
     p.drawText(text)
 
+    # Estimate note block height and place image below it
+    lines_count = len(recommendation.clinical_note.split("\n"))
+    note_bottom_y = 595 - (lines_count * 12) - 20
+
+    # X-ray Image (draw after clinical note)
     if recommendation.tooth.xray_file:
         try:
             xray_path = recommendation.tooth.xray_file.path
             xray = ImageReader(xray_path)
-            p.drawImage(xray, 350, 500, width=150, height=150, preserveAspectRatio=True)
+            p.drawImage(xray, x=50, y=note_bottom_y - 160, width=200, height=150, preserveAspectRatio=True)
         except Exception as e:
-            p.drawString(50, 480, f"[X-ray could not be loaded: {e}]")
+            p.drawString(50, note_bottom_y - 20, f"[X-ray could not be loaded: {e}]")
 
     p.showPage()
     p.save()

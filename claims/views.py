@@ -93,14 +93,14 @@ def add_crown_treatment(request, patient_id, tooth_id):
     latest_xray = patient.patientxray_set.order_by('-uploaded_at').first()
 
     if request.method == 'POST':
-        diagnosis = "Abscessed Tooth"
-        clinical_note = "X-ray shows evidence of a periapical abscess. Root canal recommended. Crown required post-treatment."
+        diagnosis = "Healthy Tooth"
+        clinical_note = "X-ray shows no evidence of a periapical abscess."
 
         if latest_xray:
             pred, prob = predict_abscess(latest_xray.image.path)
             if pred.lower() != 'abscessed':
-                diagnosis = "Healthy Tooth"
-                clinical_note = "X-ray indicates a healthy tooth. No signs of infection or damage."
+                diagnosis = "abscess detected"
+                clinical_note = "X-ray shows evidence of a periapical abscess. Root canal recommended. Crown required post-treatment."
 
         tooth.diagnosis = diagnosis
         tooth.xray_file = latest_xray.image if latest_xray else None
