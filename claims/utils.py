@@ -1,16 +1,21 @@
 import io
 import os
+import random
+import uuid
+from datetime import datetime
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from django.core.mail import EmailMessage
 from django.conf import settings
+from django.utils import timezone
 
 from fastai.vision.all import load_learner, PILImage
 
 # === Load the model ONCE ===
 MODEL_PATH = os.path.join(settings.BASE_DIR, 'claims', 'abscess_detector.pkl')
 abscess_model = load_learner(MODEL_PATH)
+
 
 def predict_abscess(image_path):
     """Runs prediction on the uploaded x-ray image and returns the label and confidence."""
@@ -24,7 +29,32 @@ def predict_abscess(image_path):
         return "Error", 0.0
 
 
+def mock_submit_insurance_claim(recommendation):
+    """
+    Simulates submitting to insurance with a success-biased outcome.
+    Adds claim ID, status, and submission timestamp.
+    """
+    if not recommendation.claim_id:
+        recommendation.claim_id = str(uuid.uuid4())[:8].upper()
+
+        outcome = random.choices(
+            ['Approved', 'Pending', 'Denied'],
+            weights=[70, 20, 10],
+            k=1
+        )[0]
+
+        recommendation.status = outcome
+        recommendation.submitted_at = timezone.now()
+        recommendation.save()
+
+        print(f"[MOCK INSURANCE] Claim ID: {recommendation.claim_id} | Status: {outcome}")
+
+
 def generate_and_email_claim(recommendation):
+    """
+    Generates a PDF for crown treatment and emails it to the admin.
+    Simulates insurance submission afterward.
+    """
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
 
@@ -52,11 +82,10 @@ def generate_and_email_claim(recommendation):
         text.textLine(line)
     p.drawText(text)
 
-    # Estimate note block height and place image below it
+    # X-ray Image below clinical note
     lines_count = len(recommendation.clinical_note.split("\n"))
     note_bottom_y = 595 - (lines_count * 12) - 20
 
-    # X-ray Image (draw after clinical note)
     if recommendation.tooth.xray_file:
         try:
             xray_path = recommendation.tooth.xray_file.path
@@ -69,6 +98,7 @@ def generate_and_email_claim(recommendation):
     p.save()
     buffer.seek(0)
 
+    # Email PDF
     try:
         email = EmailMessage(
             subject="New Crown Claim Submission",
@@ -78,9 +108,12 @@ def generate_and_email_claim(recommendation):
         )
         email.attach('crown_claim.pdf', buffer.getvalue(), 'application/pdf')
         email.send()
-        return "Email sent successfully."
+        print("[EMAIL STATUS] Crown claim sent.")
     except Exception as e:
-        return f"Failed to send email: {e}"
+        print(f"[EMAIL ERROR] {e}")
+
+    # Trigger mock insurance submission
+    mock_submit_insurance_claim(recommendation)
 
 
 def generate_and_email_srp_pre_auth(treatment):
@@ -185,4 +218,6 @@ def generate_and_email_occlusal_guard_pre_auth(treatment):
 
 
 def generate_clinical_note(tooth_number, diagnosis):
+    if "healthy" in diagnosis.lower():
+        return "Tooth is healthy and a crown isn't necessary."
     return f"Tooth {tooth_number} presents with {diagnosis}. A crown is recommended to restore function and prevent further damage."

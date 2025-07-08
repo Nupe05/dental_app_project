@@ -5,13 +5,15 @@
 <div class="container mt-4">
     <h2>Submitted Claims Dashboard</h2>
 
+    <!-- Crown Recommendations -->
     <h4 class="mt-4">Crown Recommendations</h4>
-    <table class="table table-bordered">
-        <thead>
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Patient</th>
                 <th>Tooth</th>
                 <th>CDT Code</th>
+                <th>Claim ID</th>
                 <th>Status</th>
                 <th>Submitted</th>
             </tr>
@@ -22,18 +24,50 @@
                 <td>{{ claim.patient.name }}</td>
                 <td>{{ claim.tooth.tooth_number }}</td>
                 <td>{{ claim.cdt_code }}</td>
-                <td>{{ claim.status }}</td>
-                <td>{{ claim.submitted_at|default:"—" }}</td>
+                <td>
+                    {% if claim.claim_id %}
+                        <a href="{% url 'generate_pdf' claim.id %}" 
+                           class="text-decoration-none text-monospace" 
+                           data-bs-toggle="tooltip" 
+                           data-bs-placement="top" 
+                           title="Click to download PDF summary">
+                            {{ claim.claim_id }}
+                        </a>
+                    {% else %}
+                        <em class="text-muted">—</em>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if claim.status == "Approved" %}
+                        <span class="badge bg-success">Approved</span>
+                    {% elif claim.status == "Pending" %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif claim.status == "Denied" %}
+                        <span class="badge bg-danger">Denied</span>
+                    {% elif claim.status == "Submitted" %}
+                        <span class="badge bg-primary">Submitted</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ claim.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if claim.submitted_at %}
+                        {{ claim.submitted_at|date:"M d, Y H:i" }}
+                    {% else %}
+                        <em class="text-muted">—</em>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5">No crown claims submitted.</td></tr>
+            <tr><td colspan="6" class="text-center">No crown claims submitted.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 
+    <!-- Other Procedures -->
     <h4 class="mt-4">Other Procedures (SRP, Occlusal Guard)</h4>
-    <table class="table table-bordered">
-        <thead>
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
             <tr>
                 <th>Patient</th>
                 <th>Procedure Code</th>
@@ -54,13 +88,40 @@
                         {{ t.quadrant }}
                     {% endif %}
                 </td>
-                <td>{{ t.status }}</td>
-                <td>{{ t.submitted_at|default:"—" }}</td>
+                <td>
+                    {% if t.status == "Approved" %}
+                        <span class="badge bg-success">Approved</span>
+                    {% elif t.status == "Pending" %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif t.status == "Denied" %}
+                        <span class="badge bg-danger">Denied</span>
+                    {% elif t.status == "Submitted" %}
+                        <span class="badge bg-primary">Submitted</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ t.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if t.submitted_at %}
+                        {{ t.submitted_at|date:"M d, Y H:i" }}
+                    {% else %}
+                        <em class="text-muted">—</em>
+                    {% endif %}
+                </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5">No treatment records submitted.</td></tr>
+            <tr><td colspan="5" class="text-center">No treatment records submitted.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- Enable tooltips -->
+<script>
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+</script>
 {% endblock %}
+

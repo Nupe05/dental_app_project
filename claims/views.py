@@ -86,6 +86,12 @@ def take_xray(request, patient_id):
     return render(request, 'pms/take_xray.html', {'patient': patient, 'form': form})
 
 # === Add Crown with AI Logic ===
+from .utils import (
+    generate_and_email_claim,
+    predict_abscess,
+    mock_submit_insurance_claim  # <-- NEW
+)
+
 @login_required
 def add_crown_treatment(request, patient_id, tooth_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -94,25 +100,34 @@ def add_crown_treatment(request, patient_id, tooth_id):
 
     if request.method == 'POST':
         diagnosis = "Healthy Tooth"
-        clinical_note = "X-ray shows no evidence of a periapical abscess."
+        clinical_note = "Tooth is healthy and a crown isn't necessary."
 
+        # AI Prediction
         if latest_xray:
             pred, prob = predict_abscess(latest_xray.image.path)
-            if pred.lower() != 'abscessed':
-                diagnosis = "abscess detected"
+            if pred.lower() == 'abscessed':
+                diagnosis = "Abscess detected"
                 clinical_note = "X-ray shows evidence of a periapical abscess. Root canal recommended. Crown required post-treatment."
 
+        # Update tooth record
         tooth.diagnosis = diagnosis
         tooth.xray_file = latest_xray.image if latest_xray else None
         tooth.save()
 
-        TreatmentRecord.objects.create(
+        # Create crown recommendation entry
+        recommendation = CrownRecommendation.objects.create(
             patient=patient,
             tooth=tooth,
-            procedure_code='D2740'
+            clinical_note=clinical_note
         )
+        recommendation.mark_submitted()
 
-        # Optional: generate_and_email_claim(recommendation) here
+        # Email claim with x-ray and clinical note
+        generate_and_email_claim(recommendation)
+
+        # Simulate insurance processing
+        mock_submit_insurance_claim(recommendation)
+
         return redirect('pms_success')
 
     return render(request, 'pms/add_treatment.html', {'patient': patient, 'tooth': tooth})

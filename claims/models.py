@@ -51,6 +51,7 @@ class CrownRecommendation(models.Model):
     clinical_note = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     submitted_at = models.DateTimeField(blank=True, null=True)
+    claim_id = models.CharField(max_length=20, blank=True, null=True)
 
     def mark_submitted(self):
         self.status = 'Submitted'
@@ -126,3 +127,15 @@ class TreatmentRecord(models.Model):
 
     def __str__(self):
         return f"{self.patient.name} - {self.procedure_code} - {self.status}"
+
+    def mark_accepted(self):
+        self.status = 'Approved'
+        self.save()
+
+    def mark_rejected(self):
+        self.status = 'Denied'
+        self.save()
+
+    def mark_paid(self):
+        self.status = 'Paid'
+        self.save()
