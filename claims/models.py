@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from django.core.mail import EmailMessage
 from django.conf import settings
+import uuid
+import random
 
 class Patient(models.Model):
     name = models.CharField(max_length=100)
@@ -50,11 +52,17 @@ class CrownRecommendation(models.Model):
     xray = models.FileField(upload_to='claims/', blank=True, null=True)
     clinical_note = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    submitted_at = models.DateTimeField(blank=True, null=True)
     claim_id = models.CharField(max_length=20, blank=True, null=True)
+    submitted_at = models.DateTimeField(blank=True, null=True)
 
     def mark_submitted(self):
-        self.status = 'Submitted'
+        if not self.claim_id:
+            self.claim_id = str(uuid.uuid4())[:8].upper()
+        self.status = random.choices(
+            ['Approved', 'Pending', 'Denied'],
+            weights=[70, 20, 10],
+            k=1
+        )[0]
         self.submitted_at = timezone.now()
         self.save()
 
@@ -79,63 +87,34 @@ class TreatmentRecord(models.Model):
 
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     tooth = models.ForeignKey(ToothRecord, on_delete=models.CASCADE, null=True, blank=True)
-    procedure_code = models.CharField(max_length=10)  # e.g., 'D2740', 'D4341', 'D9944'
+    procedure_code = models.CharField(max_length=10)  # D2740, D4341, D9944, etc.
     quadrant = models.CharField(max_length=2, choices=QUADRANT_CHOICES, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    claim_id = models.CharField(max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
 
     def mark_submitted(self):
-        self.status = 'Submitted'
+        if not self.claim_id:
+            self.claim_id = str(uuid.uuid4())[:8].upper()
+        self.status = random.choices(
+            ['Approved', 'Pending', 'Denied'],
+            weights=[70, 20, 10],
+            k=1
+        )[0]
         self.submitted_at = timezone.now()
         self.save()
 
-        print(f"[TEST] Triggering email for procedure: {self.procedure_code}")
-        subject = f"Test Claim Submission - {self.procedure_code}"
-        body = f"Testing submission of {self.procedure_code} for {self.patient.name}."
-
         try:
             email = EmailMessage(
-                subject=subject,
-                body=body,
+                subject=f"Treatment Submitted - {self.procedure_code}",
+                body=f"Submitted treatment for {self.patient.name}, claim ID: {self.claim_id}.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=["damon@dadswag.club"]
             )
             email.send()
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            print(f"[!] Email sending failed: {e}")
-
-        if self.procedure_code == 'D9944':
-            note = "Patient exhibits signs of bruxism and a occlusal guard is recommended."
-            subject = "Occlusal Guard Pre-Authorization"
-            body = f"Insurance pre-auth for {self.patient.name}.\n\nClinical Note:\n{note}"
-
-            try:
-                email = EmailMessage(
-                    subject=subject,
-                    body=body,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=["damon@dadswag.club"]
-                )
-                email.send()
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                print(f"[!] Occlusal Guard email sending failed: {e}")
+            print(f"[!] Email failed: {e}")
 
     def __str__(self):
         return f"{self.patient.name} - {self.procedure_code} - {self.status}"
-
-    def mark_accepted(self):
-        self.status = 'Approved'
-        self.save()
-
-    def mark_rejected(self):
-        self.status = 'Denied'
-        self.save()
-
-    def mark_paid(self):
-        self.status = 'Paid'
-        self.save()

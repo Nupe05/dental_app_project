@@ -1,13 +1,23 @@
 {% extends "claims/base.html" %}
-{% block title %}Occlusal Guard{% endblock %}
+{% load crispy_forms_tags %}
+{% load static %}
+
 {% block content %}
-  <div class="container mt-4">
-    <h2>Submit Occlusal Guard for {{ patient.name }}</h2>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <p><strong>Procedure Code:</strong> D9944</p>
-      <button type="submit" class="btn btn-primary mt-2">Submit</button>
-    </form>
-  </div>
+<div class="container mt-5">
+    <h2 class="mb-4">Submit Occlusal Guard Treatment</h2>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'patient_detail' patient.id %}" class="btn btn-outline-secondary">Back</a>
+                    <button type="submit" class="btn btn-primary">Submit Occlusal Guard Claim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

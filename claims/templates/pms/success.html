@@ -1,8 +1,14 @@
-<!-- templates/pms/success.html -->
 {% extends "claims/base.html" %}
+{% load static %}
+
 {% block content %}
-<div class="alert alert-success mt-4" role="alert">
-    Claim submitted successfully!
+<div class="container mt-5 text-center">
+    <div class="alert alert-success shadow-sm p-4" role="alert">
+        <h4 class="alert-heading">Claim Submitted Successfully!</h4>
+        <p>Your claim has been submitted, the clinical note was generated, the email was sent, and the insurance claim has been processed.</p>
+        <hr>
+        <p class="mb-0">You can view the submission details on the <a href="{% url 'dashboard' %}">Dashboard</a>.</p>
+    </div>
+    <a href="{% url 'pms_home' %}" class="btn btn-outline-primary mt-3">Return to Home</a>
 </div>
-<a href="{% url 'pms_home' %}" class="btn btn-primary mt-3">Back to Dashboard</a>
 {% endblock %}

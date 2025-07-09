@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.views import LoginView
 from django.contrib.auth import logout
 from django.contrib import messages
+from django.utils import timezone
 
 from .forms import (
     CrownRecommendationForm,
@@ -23,7 +24,8 @@ from .utils import (
     generate_and_email_claim,
     generate_and_email_srp_pre_auth,
     generate_and_email_occlusal_guard_pre_auth,
-    predict_abscess
+    predict_abscess,
+    mock_submit_insurance_claim
 )
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -36,7 +38,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import io
 
-# === Login / Logout Views ===
+# === Authentication Views ===
 class CustomLoginView(LoginView):
     template_name = 'claims/login.html'
 
@@ -50,6 +52,7 @@ def pms_home(request):
     patients = Patient.objects.all()
     return render(request, 'pms/home.html', {'patients': patients})
 
+@login_required
 def dashboard(request):
     crown_claims = CrownRecommendation.objects.all().order_by('-submitted_at')
     treatment_claims = TreatmentRecord.objects.all().order_by('-submitted_at')
@@ -58,6 +61,7 @@ def dashboard(request):
         'treatment_claims': treatment_claims,
     })
 
+# === Patient Views ===
 @login_required
 def patient_list(request):
     patients = Patient.objects.all()
@@ -69,7 +73,7 @@ def patient_detail(request, patient_id):
     teeth = ToothRecord.objects.filter(patient=patient)
     return render(request, 'pms/patient_detail.html', {'patient': patient, 'teeth': teeth})
 
-# === Take X-ray ===
+# === X-ray Upload ===
 @login_required
 def take_xray(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -85,13 +89,7 @@ def take_xray(request, patient_id):
         form = PatientXRayForm()
     return render(request, 'pms/take_xray.html', {'patient': patient, 'form': form})
 
-# === Add Crown with AI Logic ===
-from .utils import (
-    generate_and_email_claim,
-    predict_abscess,
-    mock_submit_insurance_claim  # <-- NEW
-)
-
+# === AI-Assisted Crown Submission ===
 @login_required
 def add_crown_treatment(request, patient_id, tooth_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -102,37 +100,30 @@ def add_crown_treatment(request, patient_id, tooth_id):
         diagnosis = "Healthy Tooth"
         clinical_note = "Tooth is healthy and a crown isn't necessary."
 
-        # AI Prediction
         if latest_xray:
             pred, prob = predict_abscess(latest_xray.image.path)
             if pred.lower() == 'abscessed':
                 diagnosis = "Abscess detected"
                 clinical_note = "X-ray shows evidence of a periapical abscess. Root canal recommended. Crown required post-treatment."
 
-        # Update tooth record
         tooth.diagnosis = diagnosis
         tooth.xray_file = latest_xray.image if latest_xray else None
         tooth.save()
 
-        # Create crown recommendation entry
         recommendation = CrownRecommendation.objects.create(
             patient=patient,
             tooth=tooth,
             clinical_note=clinical_note
         )
         recommendation.mark_submitted()
-
-        # Email claim with x-ray and clinical note
         generate_and_email_claim(recommendation)
-
-        # Simulate insurance processing
         mock_submit_insurance_claim(recommendation)
 
         return redirect('pms_success')
 
     return render(request, 'pms/add_treatment.html', {'patient': patient, 'tooth': tooth})
 
-# === Occlusal Guard View ===
+# === Occlusal Guard Submission ===
 @login_required
 def submit_occlusal_guard(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -146,15 +137,16 @@ def submit_occlusal_guard(request, patient_id):
                 tooth=tooth,
                 procedure_code='D9944'
             )
-            status_msg = generate_and_email_occlusal_guard_pre_auth(treatment)
-            print(f"[EMAIL STATUS] {status_msg}")
+            treatment.mark_submitted()
+            generate_and_email_occlusal_guard_pre_auth(treatment)
+            mock_submit_insurance_claim(treatment)
             return redirect('pms_success')
     else:
         form = OcclusalGuardForm(patient=patient)
 
     return render(request, 'pms/submit_occlusal_guard.html', {'patient': patient, 'form': form})
 
-# === SRP Treatment View ===
+# === SRP Submission ===
 @login_required
 def submit_srp_treatment(request, patient_id):
     patient = get_object_or_404(Patient, id=patient_id)
@@ -176,8 +168,9 @@ def submit_srp_treatment(request, patient_id):
                 procedure_code=code,
                 quadrant=quadrant
             )
-            generate_and_email_srp_pre_auth(treatment)
             treatment.mark_submitted()
+            generate_and_email_srp_pre_auth(treatment)
+            mock_submit_insurance_claim(treatment)
             return redirect('pms_success')
     else:
         form = SRPTreatmentForm()
@@ -188,7 +181,7 @@ def submit_srp_treatment(request, patient_id):
 def pms_success(request):
     return render(request, 'pms/success.html')
 
-# === Manual Crown Recommendation Form ===
+# === Manual Crown Entry ===
 @login_required
 def create_crown_recommendation(request):
     if request.method == 'POST':
@@ -204,10 +197,21 @@ def create_crown_recommendation(request):
 def recommendation_success(request):
     return render(request, 'claims/recommendation_success.html')
 
-# === PDF Generator ===
-def generate_pdf(request, recommendation_id):
-    recommendation = get_object_or_404(CrownRecommendation, id=recommendation_id)
+# === PDF Generation ===
+def generate_crown_pdf(request, recommendation_id):
+    claim = get_object_or_404(CrownRecommendation, id=recommendation_id)
+    return _build_pdf_response(claim.patient.name, claim.patient.dob, claim.tooth.tooth_number,
+                                claim.cdt_code, claim.tooth.diagnosis, claim.clinical_note, "crown_summary.pdf")
 
+def generate_treatment_pdf(request, treatment_id):
+    treatment = get_object_or_404(TreatmentRecord, id=treatment_id)
+    diagnosis = treatment.tooth.diagnosis if treatment.tooth else "N/A"
+    note = f"Pre-authorization request for {treatment.procedure_code}."
+    return _build_pdf_response(treatment.patient.name, treatment.patient.dob,
+                                treatment.tooth.tooth_number if treatment.tooth else "-",
+                                treatment.procedure_code, diagnosis, note, "treatment_summary.pdf")
+
+def _build_pdf_response(patient_name, dob, tooth_num, cdt, diagnosis, note, filename):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     p.setFont("Helvetica-Bold", 16)
@@ -215,26 +219,25 @@ def generate_pdf(request, recommendation_id):
     p.setFont("Helvetica", 12)
     p.drawString(200, 730, "Dental Claim Summary")
 
-    p.drawString(50, 700, f"Patient: {recommendation.patient.name}")
-    p.drawString(300, 700, f"DOB: {recommendation.patient.dob}")
-    p.drawString(50, 680, f"Tooth #: {recommendation.tooth.tooth_number}")
-    p.drawString(300, 680, f"CDT Code: {recommendation.cdt_code}")
-    p.drawString(50, 660, f"Diagnosis: {recommendation.tooth.diagnosis}")
+    p.drawString(50, 700, f"Patient: {patient_name}")
+    p.drawString(300, 700, f"DOB: {dob}")
+    p.drawString(50, 680, f"Tooth #: {tooth_num}")
+    p.drawString(300, 680, f"CDT Code: {cdt}")
+    p.drawString(50, 660, f"Diagnosis: {diagnosis}")
     p.drawString(50, 640, "Clinical Note:")
 
     text = p.beginText(50, 620)
     text.setFont("Helvetica", 10)
-    for line in recommendation.clinical_note.splitlines():
+    for line in note.splitlines():
         text.textLine(line)
     p.drawText(text)
 
     p.showPage()
     p.save()
     buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=filename)
 
-    return FileResponse(buffer, as_attachment=True, filename='claim_summary.pdf')
-
-# === API Endpoint ===
+# === External API ===
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
@@ -258,7 +261,7 @@ def api_create_treatment(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-# === Testing Endpoint ===
+# === Test Endpoint ===
 @login_required
 def test_model_view(request, patient_id):
     xray = PatientXRay.objects.filter(patient_id=patient_id).last()

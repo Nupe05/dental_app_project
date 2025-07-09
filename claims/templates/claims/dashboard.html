@@ -26,10 +26,10 @@
                 <td>{{ claim.cdt_code }}</td>
                 <td>
                     {% if claim.claim_id %}
-                        <a href="{% url 'generate_pdf' claim.id %}" 
-                           class="text-decoration-none text-monospace" 
-                           data-bs-toggle="tooltip" 
-                           data-bs-placement="top" 
+                        <a href="{% url 'generate_crown_pdf' claim.id %}"
+                           class="text-decoration-none text-monospace"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
                            title="Click to download PDF summary">
                             {{ claim.claim_id }}
                         </a>
@@ -64,7 +64,7 @@
         </tbody>
     </table>
 
-    <!-- Other Procedures -->
+    <!-- Other Procedures (SRP, Occlusal Guard) -->
     <h4 class="mt-4">Other Procedures (SRP, Occlusal Guard)</h4>
     <table class="table table-bordered align-middle">
         <thead class="table-light">
@@ -72,6 +72,7 @@
                 <th>Patient</th>
                 <th>Procedure Code</th>
                 <th>Tooth / Quadrant</th>
+                <th>Claim ID</th>
                 <th>Status</th>
                 <th>Submitted</th>
             </tr>
@@ -86,6 +87,19 @@
                         Tooth {{ t.tooth.tooth_number }}
                     {% else %}
                         {{ t.quadrant }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if t.claim_id %}
+                        <a href="{% url 'generate_treatment_pdf' t.id %}"
+                           class="text-decoration-none text-monospace"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="top"
+                           title="Click to download PDF summary">
+                            {{ t.claim_id }}
+                        </a>
+                    {% else %}
+                        <em class="text-muted">—</em>
                     {% endif %}
                 </td>
                 <td>
@@ -110,7 +124,7 @@
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="text-center">No treatment records submitted.</td></tr>
+            <tr><td colspan="6" class="text-center">No treatment records submitted.</td></tr>
             {% endfor %}
         </tbody>
     </table>
@@ -124,4 +138,3 @@
     });
 </script>
 {% endblock %}
-

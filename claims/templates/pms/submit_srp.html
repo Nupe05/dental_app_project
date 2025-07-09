@@ -1,15 +1,23 @@
 {% extends "claims/base.html" %}
-
-{% block title %}Scaling & Root Planing{% endblock %}
+{% load crispy_forms_tags %}
+{% load static %}
 
 {% block content %}
-  <div class="container mt-4">
-    <h2>Submit SRP Treatment for {{ patient.name }}</h2>
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-  </div>
-{% endblock %}
+<div class="container mt-5">
+    <h2 class="mb-4">Submit SRP (Scaling & Root Planing)</h2>
 
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'patient_detail' patient.id %}" class="btn btn-outline-secondary">Back</a>
+                    <button type="submit" class="btn btn-success">Submit SRP Claim</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

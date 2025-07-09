@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'claims',
     'rest_framework',
     'rest_framework.authtoken',
+    'crispy_forms',
+    'crispy_bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -143,3 +145,6 @@ REST_FRAMEWORK = {
 LOGIN_URL = '/claims/login/'
 LOGIN_REDIRECT_URL = '/claims/pms/'  # or wherever you want users to land after login
 LOGOUT_REDIRECT_URL = '/claims/login/'  # redirect to login after logout
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
